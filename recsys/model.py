@@ -11,6 +11,8 @@ def run_model(dataset, model_parameters):
     tweets_with_engagement_count = model_parameters['tweets_with_engagement_count']
     tweets_with_engagement_sum = model_parameters['tweets_with_engagement_sum']
     cluster_user_eng = model_parameters['cluster_user_eng']
+    items_stats = model_parameters['items_stats']
+    ip_clusters = model_parameters['ip_clusters']
 
     ffts_test, ffts_test_labels = item_clustering.compute_fft(dataset)
     whitened_test = whiten(ffts_test)
@@ -23,6 +25,8 @@ def run_model(dataset, model_parameters):
         item_id = tweet['imdb_item_id']
         user_id = tweet['user_id']
         rating = float(tweet['imdb_rating'])
+        if rating < 1:
+            rating = 1
 
         user_followers_count = int(tweet['user_followers_count'])
         user_statuses_count = int(tweet['user_statuses_count'])
@@ -64,7 +68,7 @@ def run_model(dataset, model_parameters):
         # ------------------
 
         # ------------------
-        # 0.8370632566756109
+        # 0.8411723432384
         # if cluster == 0:
         #     base = 20
         # elif cluster == 1:
@@ -88,7 +92,26 @@ def run_model(dataset, model_parameters):
         # else:
         #     engagement_coefficient = 1.0
         #
-        # engagement = (base + rating_base) * engagement_coefficient
+        # if item_id in ip_clusters:
+        #     if ip_clusters[item_id] == 0:
+        #         item_popularity = -10
+        #     elif ip_clusters[item_id] == 1:
+        #         item_popularity = -5
+        #     elif ip_clusters[item_id] == 2:
+        #         item_popularity = -20
+        #     elif ip_clusters[item_id] == 3:
+        #         item_popularity = 60
+        #     elif ip_clusters[item_id] == 4:
+        #         item_popularity = 90
+        # else:
+        #     item_popularity = 25
+        #
+        # if user_id in cluster_user_eng and cluster_user_eng[user_id][cluster]['eng_count'] > 0:
+        #     cluster_coefficient = 1.0 + 0.025 * log(cluster_user_eng[user_id][cluster]['eng_sum'] / cluster_user_eng[user_id][cluster]['eng_count'])
+        # else:
+        #     cluster_coefficient = 1.0
+        #
+        # engagement = (base + rating_base + item_popularity) * engagement_coefficient * cluster_coefficient
         #
         # if tweet_age > 22:
         #     engagement = 0
@@ -127,7 +150,7 @@ def run_model(dataset, model_parameters):
         # else:
         #     engagement *= 0.03994073
         # ------------------
-        # 0.8378181152694995
+        # 0.8425107067233986
         if cluster == 0:
             base = 7
         elif cluster == 1:
@@ -160,6 +183,25 @@ def run_model(dataset, model_parameters):
 
         engagement = base + item_rating * engagement_coefficient * cluster_base * cluster_coefficient
 
+        if item_id in ip_clusters:
+            if ip_clusters[item_id] == 0:
+                item_popularity = 0
+            elif ip_clusters[item_id] == 1:
+                item_popularity = 10
+            elif ip_clusters[item_id] == 2:
+                item_popularity = -20
+            elif ip_clusters[item_id] == 3:
+                item_popularity = 150
+            elif ip_clusters[item_id] == 4:
+                item_popularity = 150
+        else:
+            item_popularity = 7
+
+        # if item_id in items_stats and items_stats[item_id]['ratings_count'][rating] > 0:
+        #     item_popularity *= items_stats[item_id]['ratings_count'][rating] / items_stats[item_id]['count'] * log(items_stats[item_id]['count'] / items_stats[item_id]['ratings_count'][rating])
+
+        engagement += item_popularity
+
         if tweet_age > 22:
             engagement = 0.0
 
@@ -174,11 +216,18 @@ def run_model(dataset, model_parameters):
         if engagement <= 40:
             engagement = 0.0
 
-        # wyliczyc ile top tweetow moglo miec engagement - reszte wyzerowac
+        # # wyliczyc ile top tweetow moglo miec engagement - reszte wyzerowac
 
+        item_count = 0
+        if item_id in items_stats:
+            item_count = items_stats[item_id]['count']
+
+        i_cluster = -1
+        if item_id in ip_clusters:
+            i_cluster = ip_clusters[item_id]
         # ------------------
         solutions.append((user_id, tweet['tweet_id'], engagement))
-        solutions_debug.append((user_id, tweet['tweet_id'], engagement, cluster_base, item_rating, engagement_coefficient, cluster_coefficient))
+        solutions_debug.append((user_id, tweet['tweet_id'], engagement, str(item_rating) + "  ", item_count, "  " + str(i_cluster) + "  ", item_popularity))
 
     print('Sorting solution...')
     solutions = solution.sort_the_solution(solutions)
