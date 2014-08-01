@@ -18,11 +18,13 @@ def compute_statistics(dataset):
     cluster_user_eng = dict()
     tweets_with_engagement_count = dict()
     tweets_with_engagement_sum = dict()
-    user_had_engagement = dict()
+    users_stats = dict()
     items_stats = dict()
     for tweet in dataset:
         user_id = tweet['user_id']
-        user_had_engagement[user_id] = 0
+        users_stats[user_id] = dict()
+        users_stats[user_id]['count'] = 0.0
+        users_stats[user_id]['eng_count'] = 0.0
         cluster_user_eng[user_id] = dict()
         for i in range(k):
             cluster_user_eng[user_id][i] = dict()
@@ -45,8 +47,9 @@ def compute_statistics(dataset):
 
         cluster = clusters[item_id]
         cluster_avg_engs[cluster]['count'] += 1.0
+        users_stats[user_id]['count'] += 1.0
         if int(tweet['tweet_favourite_count']) + int(tweet['tweet_retweet_count']) > 0:
-            user_had_engagement[user_id] = 1.0
+            users_stats[user_id]['eng_count'] += 1.0
             if not tweet['tweet_is_retweet']:
                 cluster_avg_engs[cluster]['eng_count'] += 1.0
                 cluster_avg_engs[cluster]['eng_sum'] += int(tweet['tweet_favourite_count']) + int(tweet['tweet_retweet_count'])
@@ -93,11 +96,12 @@ def compute_statistics(dataset):
 
     return {
         'codebook': codebook,
+        'ip_codebook': ip_codebook,
         'ip_clusters': ip_clusters,
         'cluster_avg_engs': cluster_avg_engs,
         'cluster_user_eng': cluster_user_eng,
         'tweets_with_engagement_count': tweets_with_engagement_count,
         'tweets_with_engagement_sum': tweets_with_engagement_sum,
-        'user_had_engagement': user_had_engagement,
+        'users_stats': users_stats,
         'items_stats': items_stats
     }

@@ -7,16 +7,57 @@ import solution
 
 def run_model(dataset, model_parameters):
     codebook = model_parameters['codebook']
+    ip_codebook = model_parameters['ip_codebook']
     cluster_avg_engs = model_parameters['cluster_avg_engs']
     tweets_with_engagement_count = model_parameters['tweets_with_engagement_count']
     tweets_with_engagement_sum = model_parameters['tweets_with_engagement_sum']
     cluster_user_eng = model_parameters['cluster_user_eng']
     items_stats = model_parameters['items_stats']
     ip_clusters = model_parameters['ip_clusters']
+    users_stats = model_parameters['users_stats']
 
     ffts_test, ffts_test_labels = item_clustering.compute_fft(dataset)
     whitened_test = whiten(ffts_test)
     clusters_test = item_clustering.assign_clusters(whitened_test, ffts_test_labels, codebook)
+
+    items_test_stats = dict()
+    user_test_stats = dict()
+    for tweet in dataset:
+        item_id = tweet['imdb_item_id']
+        user_id = tweet['user_id']
+        rating = tweet['imdb_rating']
+        if rating < 1:
+            rating = 1
+
+        if item_id in items_test_stats:
+            items_test_stats[item_id]['count'] += 1.0
+            items_test_stats[item_id]['ratings_count'][rating] += 1.0
+        else:
+            items_test_stats[item_id] = dict()
+            items_test_stats[item_id]['count'] = 1.0
+            items_test_stats[item_id]['ratings_count'] = dict()
+            for r in range(10):
+                items_test_stats[item_id]['ratings_count'][r + 1] = 0.0
+            items_test_stats[item_id]['ratings_count'][rating] = 1.0
+
+        if user_id in user_test_stats:
+            user_test_stats[user_id]['count'] += 1.0
+        else:
+            user_test_stats[user_id] = dict()
+            user_test_stats[user_id]['count'] = 1.0
+
+    print('Clustering item popularity...')
+    items_test_count = list()
+    items_test_count_labels = list()
+    for tweet in dataset:
+        item_id = tweet['imdb_item_id']
+        items_test_count.append(items_test_stats[item_id]['count'])
+        items_test_count_labels.append(item_id)
+
+    ip_test_whitened = whiten(items_test_count)
+    ip_test_clusters = item_clustering.assign_clusters(ip_test_whitened, items_test_count_labels, ip_codebook)
+
+    # ------------
 
     print('Applying model...')
     solutions = list()
@@ -202,37 +243,37 @@ def run_model(dataset, model_parameters):
 
         engagement += item_popularity
 
-        if tweet_age > 22:
-            engagement = 0.0
-
-        if user_followers_count < 10:
-            engagement = 0.0
-
-        if user_statuses_count < 40:
-            engagement = 0.0
-
         engagement = round(engagement)
 
-        if engagement <= 40:
+        if tweet_age > 22 and not tweet['tweet_is_retweet']:
             engagement = 0.0
 
-        # # wyliczyc ile top tweetow moglo miec engagement - reszte wyzerowac
+        if user_followers_count < 10 and not tweet['tweet_is_retweet']:
+            engagement = 0.0
 
-        item_count = 0
-        if item_id in items_stats:
-            item_count = items_stats[item_id]['count']
+        if user_statuses_count < 40 and not tweet['tweet_is_retweet']:
+            engagement = 0.0
 
-        i_cluster = -1
-        if item_id in ip_clusters:
-            i_cluster = ip_clusters[item_id]
+        if engagement <= 40 and not tweet['tweet_is_retweet']:
+            engagement = 0.0
+
+        u_count = 1
+        u_eng_count = 1
+        if user_id in users_stats:
+            u_count = users_stats[user_id]['count']
+            u_eng_count = users_stats[user_id]['eng_count']
+
         # ------------------
         solutions.append((user_id, tweet['tweet_id'], engagement))
-        solutions_debug.append((user_id, tweet['tweet_id'], engagement, str(item_rating) + "  ", item_count, "  " + str(i_cluster) + "  ", item_popularity))
+        solutions_debug.append((user_id, tweet['tweet_id'], engagement,
+                                "{:6.0f}".format(item_rating) + "\t" +
+                                "{:4.0f}".format(item_popularity) + "\t" +
+                                "{:6.4f}".format(u_eng_count / u_count)))
 
     print('Sorting solution...')
     solutions = solution.sort_the_solution(solutions)
     solutions_debug = solution.sort_the_solution(solutions_debug)
+
     print('Saving solution...')
     solution.write_the_solution_file(solutions, '/Users/jwasilewski/RecSys2014/solution.dat')
     solution.write_the_solution_file_debug(solutions_debug, '/Users/jwasilewski/RecSys2014/solution_debug.dat')
-    print('done.')
