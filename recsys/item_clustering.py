@@ -1,11 +1,11 @@
 from datetime import datetime
 from numpy import array
-import random
 import numpy
-from scipy.cluster.vq import kmeans, whiten, vq, kmeans2
+from scipy.cluster.vq import kmeans, vq
 
 
-def compute_fft(tweets_per_day):
+def compute_fft(dataset):
+    tweets_per_day = compute_occurrences(dataset)
     ffts = list()
     ffts_labels = list()
     for item_id in tweets_per_day:

@@ -1,4 +1,5 @@
 import sys
+import subprocess
 
 
 def read_solution(the_solution_file):
@@ -27,10 +28,24 @@ def write_the_solution_file(solutions, the_solution_file):
     lines = list()
     lines.append('userid,tweetid,engagement' + '\n')
 
-    # for (user, tweet, engagement, a, b, c, d) in solutions:
-    #     line = str(user) + ',' + str(tweet) + ',' + str(engagement) + ',' + str(a) + ',' + str(b) + ',' + str(c) + ',' + str(d) + '\n'
     for (user, tweet, engagement) in solutions:
         line = str(user) + ',' + str(tweet) + ',' + str(engagement) + '\n'
+        lines.append(line)
+
+    with file(the_solution_file, 'w') as outfile:
+        outfile.writelines(lines)
+
+    p = subprocess.Popen('java -jar /Users/jwasilewski/RecSys2014/rscevaluator-0.14-jar-with-dependencies.jar /Users/jwasilewski/RecSys2014/test_solution.dat %s' % the_solution_file, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    for line in p.stdout.readlines():
+        print(line)
+    p.wait()
+
+def write_the_solution_file_debug(solutions, the_solution_file):
+    lines = list()
+    lines.append('userid,tweetid,engagement' + '\n')
+
+    for (user, tweet, engagement, a, b, c, d) in solutions:
+        line = str(user) + ',' + str(tweet) + ',' + str(engagement) + ',' + str(a) + ',' + str(b) + ',' + str(c) + ',' + str(d) + '\n'
         lines.append(line)
 
     with file(the_solution_file, 'w') as outfile:
