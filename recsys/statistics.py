@@ -179,6 +179,10 @@ def compute_statistics_0(dataset):
         items_count.append(items_stats[item_id]['count'])
         items_count_labels.append(item_id)
 
+    ip_whitened = whiten(items_count)
+    ip_codebook = item_clustering.run_kmeans(ip_whitened, 5)
+    ip_clusters = item_clustering.assign_clusters(ip_whitened, items_count_labels, ip_codebook)
+
     items_mean_engagement = dict()
     for item_id in tweets_with_engagement_count:
         if tweets_with_engagement_count[item_id] > 0:
@@ -191,5 +195,6 @@ def compute_statistics_0(dataset):
         'tweets_with_engagement_sum': tweets_with_engagement_sum,
         'users_stats': users_stats,
         'items_stats': items_stats,
-        'items_mean_engagement': items_mean_engagement
+        'items_mean_engagement': items_mean_engagement,
+        'ip_clusters': ip_clusters,
     }

@@ -691,6 +691,7 @@ def run_model_clustered_default(test, model_parameters, cluster):
 
 
 def run_model_0(test, model_parameters):
+    # 0.923250325021333
     cluster_avg_engs = model_parameters['cluster_avg_engs']
     cluster_user_eng = model_parameters['cluster_user_eng']
     items_mean_engagement = model_parameters['items_mean_engagement']
@@ -702,7 +703,7 @@ def run_model_0(test, model_parameters):
         rating = float(tweet['imdb_rating'])
         user_mentions_count = tweet['user_mentions_count']
 
-        cluster_base = 1.3 + 1.0 * log(cluster_avg_engs['eng_sum'] / cluster_avg_engs['eng_count'])
+        cluster_base = 1.1 + 1.0 * log(cluster_avg_engs['eng_sum'] / cluster_avg_engs['eng_count'])
 
         if rating > 6:
             item_rating = 50 * rating
@@ -714,12 +715,12 @@ def run_model_0(test, model_parameters):
         if item_id in items_mean_engagement:
             engagement_coefficient = 1.2 + 0.5 * log(items_mean_engagement[item_id])
         else:
-            engagement_coefficient = 1.0
+            engagement_coefficient = 1.1
 
-        if user_id in cluster_user_eng and cluster_user_eng[user_id]['eng_count'] > 0:
-            cluster_coefficient = 1.05 + 1.0 * log(cluster_user_eng[user_id]['eng_sum'] / cluster_user_eng[user_id]['eng_count'])
-        else:
-            cluster_coefficient = 1.0
+        # if user_id in cluster_user_eng and cluster_user_eng[user_id]['eng_count'] > 0:
+        #     cluster_coefficient = 1.1 + 1.0 * log(cluster_user_eng[user_id]['eng_sum'] / cluster_user_eng[user_id]['eng_count'])
+        # else:
+        cluster_coefficient = 1.0
 
         item_score = item_rating * cluster_base * engagement_coefficient * cluster_coefficient
         tweet_is_retweet = int(True == tweet['tweet_is_retweet'])
@@ -737,9 +738,11 @@ def run_model_0(test, model_parameters):
 
 
 def run_model_1(test, model_parameters):
+    # 0.8662557629952712
     cluster_avg_engs = model_parameters['cluster_avg_engs']
     cluster_user_eng = model_parameters['cluster_user_eng']
     items_mean_engagement = model_parameters['items_mean_engagement']
+    ip_clusters = model_parameters['ip_clusters']
 
     solutions = list()
     for tweet in test:
@@ -754,7 +757,11 @@ def run_model_1(test, model_parameters):
         tweet_date = datetime.strptime(tweet['tweet_created_at'], '%Y-%m-%d')
         tweet_age = (scraping_date - tweet_date).days
 
-        cluster_base = 1.1 + 1.05 * log(cluster_avg_engs['eng_sum'] / cluster_avg_engs['eng_count'])
+        ip_cluster = None
+        if item_id in ip_clusters:
+            ip_cluster = ip_clusters[item_id]
+
+        cluster_base = 1.0# + 1.05 * log(cluster_avg_engs['eng_sum'] / cluster_avg_engs['eng_count'])
 
         if rating > 6:
             item_rating = 50 * rating
@@ -764,7 +771,7 @@ def run_model_1(test, model_parameters):
             item_rating = 50 * rating
 
         if item_id in items_mean_engagement:
-            item_engagement_coefficient = 1.2 + 0.2 * log(items_mean_engagement[item_id])
+            item_engagement_coefficient = 1.2# + 1.5 * log(items_mean_engagement[item_id])
         else:
             item_engagement_coefficient = 1.0
 
@@ -773,6 +780,26 @@ def run_model_1(test, model_parameters):
         else:
             cluster_coefficient = 1.0
 
+        item_popularity_cluster_none = 0
+        item_popularity_cluster0 = 0
+        item_popularity_cluster1 = 0
+        item_popularity_cluster2 = 0
+        item_popularity_cluster3 = 0
+        item_popularity_cluster4 = 0
+
+        if ip_cluster == 0:
+            item_popularity_cluster0 = 1
+        elif ip_cluster == 1:
+            item_popularity_cluster1 = 1
+        elif ip_cluster == 2:
+            item_popularity_cluster2 = 1
+        elif ip_cluster == 3:
+            item_popularity_cluster3 = 1
+        elif ip_cluster == 4:
+            item_popularity_cluster4 = 1
+        else:
+            item_popularity_cluster_none = 1
+
         item_score = item_rating * cluster_base * item_engagement_coefficient * cluster_coefficient
         tweet_is_retweet = int(True == tweet['tweet_is_retweet'])
         user_mentions0 = int(user_mentions_count > 0)
@@ -780,6 +807,12 @@ def run_model_1(test, model_parameters):
 
         engagement = 0
         engagement += item_score
+        engagement += 0 * item_popularity_cluster0 \
+                      + 10 * item_popularity_cluster1 \
+                      - 10 * item_popularity_cluster2 \
+                      + 20 * item_popularity_cluster3 \
+                      + 15 * item_popularity_cluster4 \
+                      + 10 * item_popularity_cluster_none
         engagement += 600 * user_mentions0
         engagement += 50 * user_mentions1
         engagement += 600 * tweet_is_retweet
@@ -796,6 +829,7 @@ def run_model_1(test, model_parameters):
 
 
 def run_model_2(test, model_parameters):
+    # 0.928245540816608
     cluster_avg_engs = model_parameters['cluster_avg_engs']
     cluster_user_eng = model_parameters['cluster_user_eng']
     items_mean_engagement = model_parameters['items_mean_engagement']
@@ -807,7 +841,7 @@ def run_model_2(test, model_parameters):
         rating = float(tweet['imdb_rating'])
         user_mentions_count = tweet['user_mentions_count']
 
-        cluster_base = 1.3 + 1.15 * log(cluster_avg_engs['eng_sum'] / cluster_avg_engs['eng_count'])
+        cluster_base = 1.0#3 + 1.15 * log(cluster_avg_engs['eng_sum'] / cluster_avg_engs['eng_count'])
 
         if rating > 6:
             item_rating = 45 * rating
@@ -816,15 +850,15 @@ def run_model_2(test, model_parameters):
         else:
             item_rating = 55 * rating
 
-        if item_id in items_mean_engagement:
-            engagement_coefficient = 1.25 + 1.2 * log(items_mean_engagement[item_id])
-        else:
-            engagement_coefficient = 1.0
+        # if item_id in items_mean_engagement:
+        #     engagement_coefficient = 1.25 + 1.2 * log(items_mean_engagement[item_id])
+        # else:
+        engagement_coefficient = 1.0
 
-        if user_id in cluster_user_eng and cluster_user_eng[user_id]['eng_count'] > 0:
-            cluster_coefficient = 1.1 + 1.05 * log(cluster_user_eng[user_id]['eng_sum'] / cluster_user_eng[user_id]['eng_count'])
-        else:
-            cluster_coefficient = 1.0
+        # if user_id in cluster_user_eng and cluster_user_eng[user_id]['eng_count'] > 0:
+        #     cluster_coefficient = 1.1 + 1.05 * log(cluster_user_eng[user_id]['eng_sum'] / cluster_user_eng[user_id]['eng_count'])
+        # else:
+        cluster_coefficient = 1.0
 
         item_score = item_rating * cluster_base * engagement_coefficient * cluster_coefficient
         tweet_is_retweet = int(True == tweet['tweet_is_retweet'])
@@ -849,22 +883,18 @@ def run_model_new(test):
         user_mentions_count = tweet['user_mentions_count']
 
         if rating > 6:
-            item_rating = 50 * rating
+            item_rating = 100 * rating
         elif rating < 2:
-            item_rating = 490 * rating
+            item_rating = 400 * rating
         else:
-            item_rating = 50 * rating
-
-        engagement_coefficient = 1.0
-
-        item_score = item_rating * engagement_coefficient
+            item_rating = 100 * rating
 
         tweet_is_retweet = int(True == tweet['tweet_is_retweet'])
         user_mentions0 = int(user_mentions_count > 0)
         user_mentions1 = int(user_mentions_count > 1)
 
         engagement = 0
-        engagement += item_score
+        engagement += item_rating
         engagement += 600 * user_mentions0
         engagement += 50 * user_mentions1
         engagement += 600 * tweet_is_retweet
@@ -917,10 +947,34 @@ def run_model_clustered(train, test, model_parameters_all):
     for (user_id, tweet_id, engagement) in solutions_0:
         sol.append((user_id, tweet_id, 1.0 * engagement))
     for (user_id, tweet_id, engagement) in solutions_1:
-        sol.append((user_id, tweet_id, 1.3 * engagement))
+        sol.append((user_id, tweet_id, 1.5 * engagement))
     for (user_id, tweet_id, engagement) in solutions_2:
-        sol.append((user_id, tweet_id, 1.45 * engagement))
+        sol.append((user_id, tweet_id, 1.4 * engagement))
     for (user_id, tweet_id, engagement) in solutions_new:
-        sol.append((user_id, tweet_id, 1.1 * engagement))
+        sol.append((user_id, tweet_id, 1.0 * engagement))
     sol = solution.sort_the_solution(sol)
     solution.write_the_solution_file(sol, '/Users/jwasilewski/RecSys2014/solution.dat')
+
+
+def run_model_clustered_debug(train, test, model_parameters_all):
+    clusters = model_parameters_all['clusters']
+    tweets_train_1 = list()
+    tweets_1 = list()
+    for tweet in train:
+        item_id = tweet['imdb_item_id']
+        if item_id in clusters:
+            cluster = clusters[item_id]
+            if cluster == 1:
+                tweets_train_1.append(tweet)
+    for tweet in test:
+        item_id = tweet['imdb_item_id']
+        if item_id in clusters:
+            cluster = clusters[item_id]
+            if cluster == 1:
+                tweets_1.append(tweet)
+
+    model_parameters_1 = statistics.compute_statistics_0(tweets_train_1)
+    solutions_1 = run_model_1(tweets_1, model_parameters_1)
+
+    solutions_1 = solution.sort_the_solution(solutions_1)
+    solution.write_the_solution_file_clustered(solutions_1, '/Users/jwasilewski/RecSys2014/solution_1.dat', '1')
