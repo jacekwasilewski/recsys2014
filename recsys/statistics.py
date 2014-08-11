@@ -109,14 +109,14 @@ def compute_statistics(dataset):
     }
 
 
-def compute_statistics_0(dataset):
+def compute_statistics_0(test, train):
     print('Calculating statistics...')
     cluster_user_eng = dict()
     tweets_with_engagement_count = dict()
     tweets_with_engagement_sum = dict()
     users_stats = dict()
     items_stats = dict()
-    for tweet in dataset:
+    for tweet in test:
         user_id = tweet['user_id']
         users_stats[user_id] = dict()
         users_stats[user_id]['count'] = 0.0
@@ -131,7 +131,7 @@ def compute_statistics_0(dataset):
     cluster_avg_engs['count'] = 0.0
     cluster_avg_engs['item_count'] = 0.0
 
-    for tweet in dataset:
+    for tweet in test:
         item_id = tweet['imdb_item_id']
         user_id = tweet['user_id']
         rating = tweet['imdb_rating']
@@ -174,7 +174,7 @@ def compute_statistics_0(dataset):
     print('Clustering item popularity...')
     items_count = list()
     items_count_labels = list()
-    for tweet in dataset:
+    for tweet in test:
         item_id = tweet['imdb_item_id']
         items_count.append(items_stats[item_id]['count'])
         items_count_labels.append(item_id)
@@ -188,6 +188,50 @@ def compute_statistics_0(dataset):
         if tweets_with_engagement_count[item_id] > 0:
             items_mean_engagement[item_id] = tweets_with_engagement_sum[item_id] / tweets_with_engagement_count[item_id]
 
+    i = 0
+    items_had_engagement = dict()
+    for tweet in train:
+        if i >= 170285 - 21285:
+            item_id = tweet['imdb_item_id']
+            if int(tweet['tweet_favourite_count']) + int(tweet['tweet_retweet_count']) > 0:
+                items_had_engagement[item_id] = True
+        i += 1
+
+    cluster_user_eng2 = dict()
+    # i = 0
+    for tweet in train:
+        if i >= 170285 - 21285:
+            user_id = tweet['user_id']
+            cluster_user_eng2[user_id] = dict()
+            cluster_user_eng2[user_id]['eng_sum'] = 0.0
+            cluster_user_eng2[user_id]['eng_count'] = 0.0
+            cluster_user_eng2[user_id]['count'] = 0.0
+        i += 1
+
+    i = 0
+    for tweet in train:
+        if i >= 170285 - 21285:
+            user_id = tweet['user_id']
+            cluster_user_eng2[user_id]['count'] += 1.0
+            if int(tweet['tweet_favourite_count']) + int(tweet['tweet_retweet_count']) > 0:
+                if not tweet['tweet_is_retweet']:
+                    cluster_user_eng2[user_id]['eng_count'] += 1.0
+                    cluster_user_eng2[user_id]['eng_sum'] += int(tweet['tweet_favourite_count']) + int(tweet['tweet_retweet_count'])
+        i += 1
+
+    cluster_avg_engs2 = dict()
+    cluster_avg_engs2['eng_count'] = 0.0
+    cluster_avg_engs2['eng_sum'] = 0.0
+    cluster_avg_engs2['count'] = 0.0
+    cluster_avg_engs2['item_count'] = 0.0
+    for tweet in train:
+        cluster_avg_engs2['count'] += 1.0
+        if int(tweet['tweet_favourite_count']) + int(tweet['tweet_retweet_count']) > 0:
+            if not tweet['tweet_is_retweet']:
+                cluster_avg_engs2['eng_count'] += 1.0
+                cluster_avg_engs2['eng_sum'] += int(tweet['tweet_favourite_count']) + int(tweet['tweet_retweet_count'])
+
+
     return {
         'cluster_avg_engs': cluster_avg_engs,
         'cluster_user_eng': cluster_user_eng,
@@ -197,4 +241,7 @@ def compute_statistics_0(dataset):
         'items_stats': items_stats,
         'items_mean_engagement': items_mean_engagement,
         'ip_clusters': ip_clusters,
+        'items_had_engagement': items_had_engagement,
+        'cluster_avg_engs2': cluster_avg_engs2,
+        'cluster_user_eng2': cluster_user_eng2
     }
