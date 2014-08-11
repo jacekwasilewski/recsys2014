@@ -1,12 +1,11 @@
 import sys
 import subprocess
+import dataset
 
 
 def read_solution(the_solution_file):
     solutions = list()
     header = True
-    min = sys.float_info.max
-    max = sys.float_info.min
     with file(the_solution_file, 'r') as infile:
         for line in infile:
             if header:
@@ -17,11 +16,7 @@ def read_solution(the_solution_file):
             tweet_id = line_array[1]
             engagement = float(line_array[2])
             solutions.append(list((user_id, tweet_id, engagement)))
-            if engagement > max:
-                max = engagement
-            if engagement < min:
-                min = engagement
-    return solutions, min, max
+    return solutions
 
 
 def write_the_solution_file(solutions, the_solution_file):
@@ -54,7 +49,7 @@ def write_the_solution_file_debug(solutions, the_solution_file):
 
 
 def sort_the_solution(solutions):
-    return sorted(solutions, key=lambda data: (-int(data[0]), -int(data[2]), -int(data[1])))
+    return sorted(solutions, key=lambda data: (-int(data[0]), -float(data[2]), -int(data[1])))
 
 
 def threshold_the_solution(solutions, topn, user_had_engagement):
@@ -70,3 +65,44 @@ def threshold_the_solution(solutions, topn, user_had_engagement):
             engagement = 0.0
         new_solutions.append((user_id, tweet_id, engagement))
     return new_solutions
+
+
+def split_solution(dataset_file, the_solution_file, output_file):
+    test = dataset.read_test_dataset(dataset_file)
+    tweets = list()
+    for tweet in test:
+        tweet_id = str(tweet['tweet_id'])
+        tweets.append(tweet_id)
+
+    header = True
+    lines = list()
+    with file(the_solution_file, 'r') as infile:
+        for line in infile:
+            if header:
+                header = False
+                lines.append(line)
+                continue
+            line_array = line.strip().split(',')
+            tweet_id = str(line_array[1])
+            if tweet_id in tweets:
+                lines.append(line)
+
+    with file(output_file, 'w') as outfile:
+        outfile.writelines(lines)
+
+
+def write_the_solution_file_clustered(solutions, the_solution_file, cluster):
+    lines = list()
+    lines.append('userid,tweetid,engagement' + '\n')
+
+    for (user, tweet, engagement) in solutions:
+        line = str(user) + ',' + str(tweet) + ',' + str(engagement) + '\n'
+        lines.append(line)
+
+    with file(the_solution_file, 'w') as outfile:
+        outfile.writelines(lines)
+
+    p = subprocess.Popen('java -jar /Users/jwasilewski/RecSys2014/rscevaluator-0.14-jar-with-dependencies.jar /Users/jwasilewski/RecSys2014/test_solution_%s.dat %s' % (str(cluster), the_solution_file), shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    lines = p.stdout.readlines()
+    p.wait()
+    print lines[8]
