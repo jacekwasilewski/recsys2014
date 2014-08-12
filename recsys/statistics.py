@@ -82,30 +82,49 @@ def compute_statistics(dataset):
     for item_id in clusters:
         cluster_avg_engs[clusters[item_id]]['item_count'] += 1.0
 
-    print('Clustering item popularity...')
-    items_count = list()
-    items_count_labels = list()
-    for tweet in dataset:
-        item_id = tweet['imdb_item_id']
-        items_count.append(items_stats[item_id]['count'])
-        items_count_labels.append(item_id)
+    # print('Clustering item popularity...')
+    # items_count = list()
+    # items_count_labels = list()
+    # for tweet in dataset:
+    #     item_id = tweet['imdb_item_id']
+    #     items_count.append(items_stats[item_id]['count'])
+    #     items_count_labels.append(item_id)
+    #
+    # ip_whitened = whiten(items_count)
+    # ip_codebook = item_clustering.run_kmeans(ip_whitened, 5)
+    # ip_clusters = item_clustering.assign_clusters(ip_whitened, items_count_labels, ip_codebook)
 
-    ip_whitened = whiten(items_count)
-    ip_codebook = item_clustering.run_kmeans(ip_whitened, 5)
-    ip_clusters = item_clustering.assign_clusters(ip_whitened, items_count_labels, ip_codebook)
+    items_mean_engagement = dict()
+    for item_id in tweets_with_engagement_count:
+        if tweets_with_engagement_count[item_id] > 0:
+            items_mean_engagement[item_id] = tweets_with_engagement_sum[item_id] / tweets_with_engagement_count[item_id]
+
+    clusters_mean_engagement = dict()
+    for i in range(k):
+        clusters_mean_engagement[i] = cluster_avg_engs[i]['eng_sum'] / cluster_avg_engs[i]['eng_count']
+
+    users_clusters_mean_engagement = dict()
+    for i in range(k):
+        users_clusters_mean_engagement[i] = dict()
+        for user_id in cluster_user_eng:
+            if cluster_user_eng[user_id][i]['eng_count'] > 0:
+                users_clusters_mean_engagement[i][user_id] = cluster_user_eng[user_id][i]['eng_sum'] / cluster_user_eng[user_id][i]['eng_count']
+
 
     return {
         'codebook': codebook,
         'clusters': clusters,
-        'ip_codebook': ip_codebook,
-        'ip_clusters': ip_clusters,
+        # 'ip_codebook': ip_codebook,
+        # 'ip_clusters': ip_clusters,
         'cluster_avg_engs': cluster_avg_engs,
         'cluster_user_eng': cluster_user_eng,
-        'tweets_with_engagement_count': tweets_with_engagement_count,
-        'tweets_with_engagement_sum': tweets_with_engagement_sum,
+        # 'tweets_with_engagement_count': tweets_with_engagement_count,
+        # 'tweets_with_engagement_sum': tweets_with_engagement_sum,
         'users_stats': users_stats,
         'items_stats': items_stats,
-        'tweets_per_day': []
+        'items_mean_engagement': items_mean_engagement,
+        'clusters_mean_engagement': clusters_mean_engagement,
+        'users_clusters_mean_engagement': users_clusters_mean_engagement
     }
 
 

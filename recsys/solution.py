@@ -48,6 +48,18 @@ def write_the_solution_file_debug(solutions, the_solution_file):
         outfile.writelines(lines)
 
 
+def write_debug(debug, the_solution_file):
+    lines = list()
+    lines.append('item_id,tweet_id,user_id,lcme,rating_1,rating_2,rating_3,rating_4,rating_5,rating_6,rating_7,rating_8,rating_9,rating_10,lime,lume,tweet_is_retweet,user_mentions0,user_mentions1,engagement' + '\n')
+
+    for (item_id, tweet_id, user_id, lcme, rating_1, rating_2, rating_3, rating_4, rating_5, rating_6, rating_7, rating_8, rating_9, rating_10, lime, lume, tweet_is_retweet, user_mentions0, user_mentions1, engagement) in debug:
+        line = str(item_id) + ',' + str(tweet_id)+','+ str(user_id)+','+ str(lcme)+','+ str(rating_1)+','+str(rating_2)+','+str(rating_3)+','+ str(rating_4)+','+ str(rating_5)+','+str(rating_6)+','+ str(rating_7)+','+str(rating_8)+','+str(rating_9)+','+str(rating_10)+','+str(lime)+','+str(lume)+','+str(tweet_is_retweet)+','+str(user_mentions0)+','+str(user_mentions1)+','+str(engagement)+'\n'
+        lines.append(line)
+
+    with file(the_solution_file, 'w') as outfile:
+        outfile.writelines(lines)
+
+
 def sort_the_solution(solutions):
     return sorted(solutions, key=lambda data: (-int(data[0]), -float(data[2]), -int(data[1])))
 
