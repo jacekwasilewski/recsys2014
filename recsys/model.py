@@ -85,10 +85,11 @@ def run_model(test, statistics, model_parameters, is_debug=False):
         solutions.append((user_id, tweet['tweet_id'], engagement))
         if is_debug:
             debug.append((
+                model_parameters[0],
                 item_id,
                 tweet['tweet_id'],
                 user_id,
-                log(cluster_mean_engagement),
+                log_cluster_mean_engagement,
                 rating_1,
                 rating_2,
                 rating_3,
@@ -104,6 +105,8 @@ def run_model(test, statistics, model_parameters, is_debug=False):
                 tweet_is_retweet,
                 user_mentions0,
                 user_mentions1,
+                item_had_engagement,
+                user_had_engagement,
                 str((tweet['tweet_engagement'] > 0))
             ))
     return solutions, debug
@@ -149,29 +152,29 @@ def run_model_clustered(test, statistics, is_debug=False):
                           1.0,  # user_mentions0
                           0.0833,  # user_mentions1
                           1.0,  # tweet_is_retweet
-                          0.0]  # free variable
-    model_parameters_2 = [2,
-                          1.6,
+                          0.001]  # free variable
+    model_parameters_2 = [2,  # cluster
+                          1.6,  # log_cluster_mean_engagement
                           [1.0, 0.0, 0.0102, 0.0204, 0.0306, 0.0408, 0.6938, 0.7959, 0.8979, 1.0],
-                          0.0,
-                          0.1,
-                          0.0,
-                          0.1,
-                          1.0,
-                          0.0833,
-                          1.0,
-                          0.0]
-    model_parameters_new = [None,
-                            0.0,
+                          0.0,  # item_had_engagement
+                          0.1,  # log_item_mean_engagement
+                          0.0,  # user_had_engagement
+                          0.1,  # log_user_mean_engagement
+                          1.0,  # user_mentions0
+                          0.0833,  # user_mentions1
+                          1.0,  # tweet_is_retweet
+                          0.0]  # free variable
+    model_parameters_new = [None,  # cluster
+                            0.0,  # log_cluster_mean_engagement
                             [1.5, 0.0, 0.0153, 0.0306, 0.0459, 0.0612, 1.0407, 1.19385, 1.41, 1.5],
-                            0.0,
-                            0.0,
-                            0.0,
-                            0.0,
-                            1.0,
-                            0.0833,
-                            1.0,
-                            0.0]
+                            0.0,  # item_had_engagement
+                            0.0,  # log_item_mean_engagement
+                            0.0,  # user_had_engagement
+                            0.0,  # log_user_mean_engagement
+                            1.0,  # user_mentions0
+                            0.0833,  # user_mentions1
+                            1.0,  # tweet_is_retweet
+                            0.0]  # free variable
     solutions_0, debug_0 = run_model(tweets_0, statistics, model_parameters_0, is_debug)
     solutions_1, debug_1 = run_model(tweets_1, statistics, model_parameters_1, is_debug)
     solutions_2, debug_2 = run_model(tweets_2, statistics, model_parameters_2, is_debug)
@@ -189,15 +192,27 @@ def run_model_clustered(test, statistics, is_debug=False):
 
     if is_debug:
         debug = list()
+        debug0 = list()
+        debug1 = list()
+        debug2 = list()
+        debugnew = list()
         for d in debug_0:
             debug.append(d)
+            debug0.append(d)
         for d in debug_1:
             debug.append(d)
+            debug1.append(d)
         for d in debug_2:
             debug.append(d)
+            debug2.append(d)
         for d in debug_new:
             debug.append(d)
+            debugnew.append(d)
         solution.write_debug(debug, '/Users/jwasilewski/RecSys2014/debug.csv')
+        solution.write_debug(debug0, '/Users/jwasilewski/RecSys2014/debug0.csv')
+        solution.write_debug(debug1, '/Users/jwasilewski/RecSys2014/debug1.csv')
+        solution.write_debug(debug2, '/Users/jwasilewski/RecSys2014/debug2.csv')
+        solution.write_debug(debugnew, '/Users/jwasilewski/RecSys2014/debugnew.csv')
 
     sol = solution.sort_the_solution(sol)
     solution.write_the_solution_file(sol, '/Users/jwasilewski/RecSys2014/solution.dat')
