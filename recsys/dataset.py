@@ -146,13 +146,13 @@ def read_todo_from_emtpy_file(the_dataset_file):
 
 def read_datasets():
     tweets_train = read_train_dataset('/Users/jwasilewski/Datasets/RecSys2014/training.dat')
-    tweets_test = read_test_dataset('/Users/jwasilewski/Datasets/RecSys2014/test.dat')
+    tweets_test = read_train_dataset('/Users/jwasilewski/Datasets/RecSys2014/test.dat')
     return tweets_train, tweets_test
 
 
 def read_datasets_sample():
     tweets_train = read_train_dataset('/Users/jwasilewski/Datasets/RecSys2014/training.dat', 1000)
-    tweets_test = read_test_dataset('/Users/jwasilewski/Datasets/RecSys2014/test.dat', 1000)
+    tweets_test = read_train_dataset('/Users/jwasilewski/Datasets/RecSys2014/test.dat', 1000)
     return tweets_train, tweets_test
 
 

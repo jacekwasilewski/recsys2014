@@ -13,13 +13,48 @@ def compute_statistics(dataset):
     codebook = item_clustering.run_kmeans(whitened, k)
     clusters = item_clustering.assign_clusters(whitened, ffts_labels, codebook)
 
+    items_stats = dict()
+    for tweet in dataset:
+        item_id = tweet['imdb_item_id']
+        rating = tweet['imdb_rating']
+        if rating < 1:
+            rating = 1
+        if item_id in items_stats:
+            items_stats[item_id]['count'] += 1.0
+            items_stats[item_id]['ratings_count'][rating] += 1.0
+            if int(tweet['tweet_favourite_count']) + int(tweet['tweet_retweet_count']) > 0:
+                items_stats[item_id]['eng_count'] += 1.0
+        else:
+            items_stats[item_id] = dict()
+            items_stats[item_id]['count'] = 1.0
+            items_stats[item_id]['ratings_count'] = dict()
+            if int(tweet['tweet_favourite_count']) + int(tweet['tweet_retweet_count']) > 0:
+                items_stats[item_id]['eng_count'] = 1.0
+            else:
+                items_stats[item_id]['eng_count'] = 0.0
+            for r in range(10):
+                items_stats[item_id]['ratings_count'][r + 1] = 0.0
+            items_stats[item_id]['ratings_count'][rating] = 1.0
+
+    print('Clustering item popularity...')
+    items_count = list()
+    items_count_labels = list()
+    for tweet in dataset:
+        item_id = tweet['imdb_item_id']
+        items_count.append(items_stats[item_id]['count'])
+        items_count_labels.append(item_id)
+
+    ip_whitened = whiten(items_count)
+    ip_codebook = item_clustering.run_kmeans(ip_whitened, 3)
+    ip_clusters = item_clustering.assign_clusters(ip_whitened, items_count_labels, ip_codebook)
+    clusters = ip_clusters
+
     print('Calculating statistics...')
     cluster_avg_engs = dict()
     cluster_user_eng = dict()
     tweets_with_engagement_count = dict()
     tweets_with_engagement_sum = dict()
     users_stats = dict()
-    items_stats = dict()
     for tweet in dataset:
         user_id = tweet['user_id']
         users_stats[user_id] = dict()
@@ -30,6 +65,7 @@ def compute_statistics(dataset):
             cluster_user_eng[user_id][i] = dict()
             cluster_user_eng[user_id][i]['eng_sum'] = 0.0
             cluster_user_eng[user_id][i]['eng_count'] = 0.0
+            cluster_user_eng[user_id][i]['count'] = 0.0
 
     for i in range(k):
         cluster_avg_engs[i] = dict()
@@ -41,13 +77,11 @@ def compute_statistics(dataset):
     for tweet in dataset:
         item_id = tweet['imdb_item_id']
         user_id = tweet['user_id']
-        rating = tweet['imdb_rating']
-        if rating < 1:
-            rating = 1
 
         cluster = clusters[item_id]
         cluster_avg_engs[cluster]['count'] += 1.0
         users_stats[user_id]['count'] += 1.0
+        cluster_user_eng[user_id][cluster]['count'] += 1.0
         if int(tweet['tweet_favourite_count']) + int(tweet['tweet_retweet_count']) > 0:
             users_stats[user_id]['eng_count'] += 1.0
             if not tweet['tweet_is_retweet']:
@@ -68,31 +102,8 @@ def compute_statistics(dataset):
                 else:
                     tweets_with_engagement_sum[item_id] = 1.0
 
-        if item_id in items_stats:
-            items_stats[item_id]['count'] += 1.0
-            items_stats[item_id]['ratings_count'][rating] += 1.0
-        else:
-            items_stats[item_id] = dict()
-            items_stats[item_id]['count'] = 1.0
-            items_stats[item_id]['ratings_count'] = dict()
-            for r in range(10):
-                items_stats[item_id]['ratings_count'][r + 1] = 0.0
-            items_stats[item_id]['ratings_count'][rating] = 1.0
-
     for item_id in clusters:
         cluster_avg_engs[clusters[item_id]]['item_count'] += 1.0
-
-    # print('Clustering item popularity...')
-    # items_count = list()
-    # items_count_labels = list()
-    # for tweet in dataset:
-    #     item_id = tweet['imdb_item_id']
-    #     items_count.append(items_stats[item_id]['count'])
-    #     items_count_labels.append(item_id)
-    #
-    # ip_whitened = whiten(items_count)
-    # ip_codebook = item_clustering.run_kmeans(ip_whitened, 5)
-    # ip_clusters = item_clustering.assign_clusters(ip_whitened, items_count_labels, ip_codebook)
 
     items_mean_engagement = dict()
     for item_id in tweets_with_engagement_count:
@@ -110,17 +121,42 @@ def compute_statistics(dataset):
             if cluster_user_eng[user_id][i]['eng_count'] > 0:
                 users_clusters_mean_engagement[i][user_id] = cluster_user_eng[user_id][i]['eng_sum'] / cluster_user_eng[user_id][i]['eng_count']
 
+    cluster_engagement_probability = dict()
+    for i in range(k):
+        cluster_engagement_probability[i] = cluster_avg_engs[i]['eng_count'] / cluster_avg_engs[i]['count']
+
+    item_engagement_probability = dict()
+    for item_id in items_stats:
+        item_engagement_probability[item_id] = items_stats[item_id]['eng_count'] / items_stats[item_id]['count']
+
+    user_cluster_engagement_probability = dict()
+    for i in range(k):
+        user_cluster_engagement_probability[i] = dict()
+        for user_id in cluster_user_eng:
+            if cluster_user_eng[user_id][i]['count'] > 0:
+                user_cluster_engagement_probability[i][user_id] = cluster_user_eng[user_id][i]['eng_count'] / cluster_user_eng[user_id][i]['count']
+            else:
+                user_cluster_engagement_probability[i][user_id] = 0.0
+
+    user_engagement_probability = dict()
+    for user_id in users_stats:
+        user_engagement_probability[user_id] = users_stats[user_id]['eng_count'] / users_stats[user_id]['count']
 
     return {
         'codebook': codebook,
         'clusters': clusters,
+        'ip_clusters': ip_clusters,
         'cluster_avg_engs': cluster_avg_engs,
         'cluster_user_eng': cluster_user_eng,
         'users_stats': users_stats,
         'items_stats': items_stats,
         'items_mean_engagement': items_mean_engagement,
         'clusters_mean_engagement': clusters_mean_engagement,
-        'users_clusters_mean_engagement': users_clusters_mean_engagement
+        'users_clusters_mean_engagement': users_clusters_mean_engagement,
+        'item_engagement_probability': item_engagement_probability,
+        'user_cluster_engagement_probability': user_cluster_engagement_probability,
+        'user_engagement_probability': user_engagement_probability,
+        'cluster_engagement_probability': cluster_engagement_probability
     }
 
 

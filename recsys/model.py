@@ -6,13 +6,23 @@ def run_model(test, statistics, model_parameters, is_debug=False):
     items_mean_engagement = statistics['items_mean_engagement']
     clusters_mean_engagement = statistics['clusters_mean_engagement']
     users_clusters_mean_engagement = statistics['users_clusters_mean_engagement']
+    item_engagement_probability = statistics['item_engagement_probability']
+    user_cluster_engagement_probability = statistics['user_cluster_engagement_probability']
+    user_engagement_probability = statistics['user_engagement_probability']
+    cluster_engagement_probability = statistics['cluster_engagement_probability']
 
     cluster_mean_engagement = None
     users_mean_engagement = dict()
+    cep = None
+    users_cluster_engagement_probability = dict()
     if model_parameters[0] in clusters_mean_engagement:
         cluster_mean_engagement = clusters_mean_engagement[model_parameters[0]]
     if model_parameters[0] in users_clusters_mean_engagement:
         users_mean_engagement = users_clusters_mean_engagement[model_parameters[0]]
+    if model_parameters[0] in user_cluster_engagement_probability:
+        users_cluster_engagement_probability = user_cluster_engagement_probability[model_parameters[0]]
+    if model_parameters[0] in cluster_engagement_probability:
+        cep = cluster_engagement_probability[model_parameters[0]]
 
     solutions = list()
     debug = list()
@@ -23,6 +33,18 @@ def run_model(test, statistics, model_parameters, is_debug=False):
         tweet_is_retweet = int(True == tweet['tweet_is_retweet'])
         user_mentions0 = int(tweet['user_mentions_count'] > 0)
         user_mentions1 = int(tweet['user_mentions_count'] > 1)
+
+        iep = 0.0
+        uep = 0.0
+        ucep = 0.0
+        if item_id in item_engagement_probability:
+            iep = item_engagement_probability[item_id]
+        if user_id in user_engagement_probability:
+            uep = user_engagement_probability[user_id]
+        if cep is None:
+            cep = 0.0
+        if user_id in users_cluster_engagement_probability:
+            ucep = users_cluster_engagement_probability[user_id]
 
         rating_1 = 0
         rating_2 = 0
@@ -83,6 +105,7 @@ def run_model(test, statistics, model_parameters, is_debug=False):
         engagement += model_parameters[9] * tweet_is_retweet
 
         solutions.append((user_id, tweet['tweet_id'], engagement))
+
         if is_debug:
             debug.append((
                 model_parameters[0],
@@ -107,6 +130,12 @@ def run_model(test, statistics, model_parameters, is_debug=False):
                 user_mentions1,
                 item_had_engagement,
                 user_had_engagement,
+                rating,
+                iep,
+                uep,
+                cep,
+                ucep,
+                tweet['user_mentions_count'],
                 str((tweet['tweet_engagement'] > 0))
             ))
     return solutions, debug
