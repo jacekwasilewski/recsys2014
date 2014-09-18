@@ -130,9 +130,10 @@ def compute_features(dataset, test_dataset):
                         float(log(cluster_avg_engs[cluster]['eng_sum'] / cluster_avg_engs[cluster]['eng_count'])),
                         int(tweet['user_mentions_count']),
                         num_engagements))
-        train_features.append((items_stats[item_id]['count'],
-                               tweets_with_engagement_sum[item_id],
-                               rating,
+        train_features.append((rating * int(rating < 2),
+                               rating * int(rating > 6),
+                               rating * int(rating >= 2 and rating <= 6),
+                               -log(items_stats[item_id]['count']) + log(tweets_with_engagement_sum[item_id]),
                                int(tweet['tweet_is_retweet']),
                                float(
                                    log(cluster_avg_engs[cluster]['eng_sum'] / cluster_avg_engs[cluster]['eng_count'])),

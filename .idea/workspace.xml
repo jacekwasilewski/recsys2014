@@ -3,9 +3,6 @@
   <component name="ChangeListManager">
     <list default="true" id="2aa3c769-8c13-4b48-a326-de39301e9527" name="Default" comment="">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/recsys/main.py" afterPath="$PROJECT_DIR$/recsys/main.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/recsys/model.py" afterPath="$PROJECT_DIR$/recsys/model.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/recsys/solution.py" afterPath="$PROJECT_DIR$/recsys/solution.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
     </list>
     <ignored path="RecSys2014.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -61,8 +58,8 @@
       <file leaf-file-name="main.py" pinned="false" current="true" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/recsys/main.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="2.3157895" vertical-offset="1575" max-vertical-offset="3180">
-              <caret line="193" column="33" selection-start-line="193" selection-start-column="33" selection-end-line="193" selection-end-column="33" />
+            <state vertical-scroll-proportion="0.7894737" vertical-offset="1590" max-vertical-offset="3195">
+              <caret line="136" column="53" selection-start-line="136" selection-start-column="53" selection-end-line="136" selection-end-column="53" />
               <folding>
                 <element signature="e#0#20#0" expanded="true" />
               </folding>
@@ -863,8 +860,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/recsys/main.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="2.3157895" vertical-offset="1575" max-vertical-offset="3180">
-          <caret line="193" column="33" selection-start-line="193" selection-start-column="33" selection-end-line="193" selection-end-column="33" />
+        <state vertical-scroll-proportion="0.7894737" vertical-offset="1590" max-vertical-offset="3195">
+          <caret line="136" column="53" selection-start-line="136" selection-start-column="53" selection-end-line="136" selection-end-column="53" />
           <folding>
             <element signature="e#0#20#0" expanded="true" />
           </folding>
