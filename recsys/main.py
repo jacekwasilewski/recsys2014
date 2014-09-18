@@ -1,9 +1,12 @@
 from math import log
 
 from scipy.cluster.vq import whiten
+from sklearn.linear_model import LogisticRegression
 
 import dataset
 import item_clustering
+import numpy as np
+import solution
 
 
 def compute_features(dataset, test_dataset):
@@ -102,7 +105,16 @@ def compute_features(dataset, test_dataset):
     for item_id in clusters:
         cluster_avg_engs[clusters[item_id]]['item_count'] += 1.0
 
-    lines = list()
+    clusters_coeff = list()
+    for i in range(k):
+        clusters_coeff.append(float(log(cluster_avg_engs[i]['eng_sum'] / cluster_avg_engs[i]['eng_count'])))
+    clusters_coeff_sorted = np.argsort(clusters_coeff)
+
+    clusters_map = dict()
+    clusters_map[0] = 0
+    clusters_map[1] = 0
+    clusters_map[2] = 0
+    # lines = list()
     train_features = list()
     train_labels = list()
     for tweet in dataset:
@@ -122,29 +134,33 @@ def compute_features(dataset, test_dataset):
         if num_engagements == 0:
             num_engagements = 2
 
-        lines.append("%s %s %s %s %s %s %s\n"
-                     % (items_stats[item_id]['count'],
-                        tweets_with_engagement_sum[item_id],
-                        rating,
-                        int(tweet['tweet_is_retweet']),
-                        float(log(cluster_avg_engs[cluster]['eng_sum'] / cluster_avg_engs[cluster]['eng_count'])),
-                        int(tweet['user_mentions_count']),
-                        num_engagements))
+        # lines.append("%s %s %s %s %s %s %s\n"
+        #              % (items_stats[item_id]['count'],
+        #                 rating,
+        #                 tweets_with_engagement_sum[item_id],
+        #                 int(tweet['tweet_is_retweet']),
+        #                 float(log(cluster_avg_engs[cluster]['eng_sum'] / cluster_avg_engs[cluster]['eng_count'])),
+        #                 int(tweet['user_mentions_count']),
+        #                 num_engagements))
+
+        if item_id in items_stats and items_stats[item_id]['count'] > 0:
+            lis = log(items_stats[item_id]['count'])
+        else:
+            lis = 0
         train_features.append((rating * int(rating < 2),
                                rating * int(rating > 6),
                                rating * int(rating >= 2 and rating <= 6),
-                               -log(items_stats[item_id]['count']) + log(tweets_with_engagement_sum[item_id]),
+                               log(tweets_with_engagement_sum[item_id]) - lis,
                                int(tweet['tweet_is_retweet']),
-                               float(
-                                   log(cluster_avg_engs[cluster]['eng_sum'] / cluster_avg_engs[cluster]['eng_count'])),
+                               clusters_coeff_sorted[cluster] + 1,
                                int(tweet['user_mentions_count'])))
         train_labels.append(num_engagements)
 
-    with file('lr.out', 'w') as outfile:
-        outfile.writelines(lines)
+    # with file('lr.out', 'w') as outfile:
+    #     outfile.writelines(lines)
 
     print('And here ...')
-    lines = list()
+    # lines = list()
     test_features = list()
     for tweet in test_dataset:
         item_id = tweet['imdb_item_id']
@@ -155,44 +171,60 @@ def compute_features(dataset, test_dataset):
         else:
             cluster = 0
 
-        num_engagements = int(tweet['tweet_favourite_count']) + int(tweet['tweet_retweet_count'])
+        # num_engagements = int(tweet['tweet_favourite_count']) + int(tweet['tweet_retweet_count'])
+
+        if item_id in items_stats and items_stats[item_id]['count'] > 0:
+            lis = log(items_stats[item_id]['count'])
+        else:
+            lis = 0
 
         if item_id in items_stats:
-            lines.append("%s %s %s %s %s %s %s\n"
-                         % (items_stats[item_id]['count'],
-                            tweets_with_engagement_sum[item_id],
-                            rating,
-                            int(tweet['tweet_is_retweet']),
-                            float(log(cluster_avg_engs[cluster]['eng_sum'] / cluster_avg_engs[cluster]['eng_count'])),
-                            int(tweet['user_mentions_count']),
-                            num_engagements))
-            test_features.append((items_stats[item_id]['count'],
-                                  tweets_with_engagement_sum[item_id],
-                                  rating,
-                                  int(tweet['tweet_is_retweet']),
-                                  float(log(
-                                      cluster_avg_engs[cluster]['eng_sum'] / cluster_avg_engs[cluster]['eng_count'])),
-                                  int(tweet['user_mentions_count']),
-                                  num_engagements))
+            # lines.append("%s %s %s %s %s %s %s\n"
+            #              % (items_stats[item_id]['count'],
+            #                 tweets_with_engagement_sum[item_id],
+            #                 rating,
+            #                 int(tweet['tweet_is_retweet']),
+            #                 float(log(cluster_avg_engs[cluster]['eng_sum'] / cluster_avg_engs[cluster]['eng_count'])),
+            #                 int(tweet['user_mentions_count']),
+            #                 num_engagements))
+            test_features.append((rating * int(rating < 2),
+                               rating * int(rating > 6),
+                               rating * int(rating >= 2 and rating <= 6),
+                               log(tweets_with_engagement_sum[item_id]) - lis,
+                               int(tweet['tweet_is_retweet']),
+                               clusters_coeff_sorted[cluster] + 1,
+                               int(tweet['user_mentions_count'])))
+            # test_features.append((items_stats[item_id]['count'],
+            #                       tweets_with_engagement_sum[item_id],
+            #                       rating,
+            #                       int(tweet['tweet_is_retweet']),
+            #                       clusters_coeff_sorted[cluster] + 1,
+            #                       int(tweet['user_mentions_count'])))
         else:
-            lines.append("%s %s %s %s %s %s %s\n"
-                         % (0,
-                            0,
-                            rating,
-                            int(tweet['tweet_is_retweet']),
-                            0,
-                            int(tweet['user_mentions_count']),
-                            num_engagements))
-            test_features.append((0,
-                                  0,
-                                  rating,
-                                  int(tweet['tweet_is_retweet']),
-                                  0,
-                                  int(tweet['user_mentions_count']),
-                                  num_engagements))
+            # lines.append("%s %s %s %s %s %s %s\n"
+            #              % (0,
+            #                 0,
+            #                 rating,
+            #                 int(tweet['tweet_is_retweet']),
+            #                 0,
+            #                 int(tweet['user_mentions_count']),
+            #                 num_engagements))
+            test_features.append((rating * int(rating < 2),
+                               rating * int(rating > 6),
+                               rating * int(rating >= 2 and rating <= 6),
+                               0,
+                               int(tweet['tweet_is_retweet']),
+                               0,
+                               int(tweet['user_mentions_count'])))
+            # test_features.append((0,
+            #                       0,
+            #                       rating,
+            #                       int(tweet['tweet_is_retweet']),
+            #                       0,
+            #                       int(tweet['user_mentions_count'])))
 
-    with file('lrtest.out', 'w') as outfile:
-        outfile.writelines(lines)
+    # with file('lrtest.out', 'w') as outfile:
+    #     outfile.writelines(lines)
     return train_features, train_labels, test_features
 
 
@@ -200,6 +232,11 @@ if __name__ == "__main__":
     print('Loading datasets...')
     tweets_train, tweets_test = dataset.read_datasets()
     train_features, train_labels, test_features = compute_features(tweets_train, tweets_test)
+    model = LogisticRegression()
+    model = model.fit(train_features, train_labels)
+    probabilities = model.predict_proba(test_features)
+    solution.prepare_solutions(tweets_test, probabilities[:, 0])
+    
     # lrmodel = model.learn_model(tweets_train)
     # predictions = model.apply_model(tweets_test, lrmodel)
     # solution.prepare_solutions(tweets_test, predictions)
