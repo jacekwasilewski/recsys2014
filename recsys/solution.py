@@ -120,3 +120,11 @@ def write_the_solution_file_clustered(solutions, the_solution_file, cluster):
     lines = p.stdout.readlines()
     p.wait()
     print lines[8]
+
+
+def prepare_solutions(tweets_test, predictions):
+    solutions = list()
+    for i, tweet in enumerate(tweets_test):
+        solutions.append((tweet['user_id'], tweet['tweet_id'], predictions[i]))
+    solutions = sort_the_solution(solutions)
+    write_the_solution_file(solutions, '/Users/jwasilewski/RecSys2014/solutions.dat')

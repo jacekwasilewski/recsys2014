@@ -1,5 +1,8 @@
 from math import log
+from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import StandardScaler
 import solution
+import numpy as np
 
 
 def run_model(test, statistics, model_parameters, is_debug=False):
@@ -245,3 +248,74 @@ def run_model_clustered(test, statistics, is_debug=False):
 
     sol = solution.sort_the_solution(sol)
     solution.write_the_solution_file(sol, '/Users/jwasilewski/RecSys2014/solution.dat')
+
+
+def run_model_mentions(test):
+    solutions = list()
+    for tweet in test:
+        user_id = tweet['user_id']
+        user_mentions = int(tweet['user_mentions_count'] > 0)
+
+        engagement = user_mentions
+
+        solutions.append((user_id, tweet['tweet_id'], engagement))
+
+    return solutions
+
+
+def learn_model(train):
+    features = list()
+    labels = list()
+    for tweet in train:
+        rating = tweet['imdb_rating']
+
+        rating_low = 0
+        rating_medium = 0
+        rating_high = 0
+        if rating < 2:
+            rating_low = 1
+        elif rating > 6:
+            rating_high = 1
+        else:
+            rating_medium = 1
+
+        engagement = tweet['tweet_favourite_count'] + tweet['tweet_retweet_count']
+
+        features.append((rating_low, rating_medium, rating_high))
+        labels.append(engagement)
+    features = np.array(features)
+    labels = np.array(labels)
+    labels = (labels > 0).astype(np.int)
+    X = StandardScaler().fit_transform(features)
+    y = np.ravel(labels)
+    model = LogisticRegression()
+    model = model.fit(X, y)
+    return model
+
+
+def apply_model(test, model):
+    """
+
+    :param test:
+    :param LogisticRegression model: Model
+    :return:
+    """
+    features = list()
+    for tweet in test:
+        rating = tweet['imdb_rating']
+
+        rating_low = 0
+        rating_medium = 0
+        rating_high = 0
+        if rating < 2:
+            rating_low = 1
+        elif rating > 6:
+            rating_high = 1
+        else:
+            rating_medium = 1
+
+        features.append((rating_low, rating_medium, rating_high))
+    features = np.array(features)
+    X = StandardScaler().fit_transform(features)
+    predictions = model.predict(X)
+    return predictions
