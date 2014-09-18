@@ -27,7 +27,6 @@ def read_train_dataset(the_dataset_file, limit=False):
             is_retweet = 'retweeted_status' in json_obj
             retweet_of = None
             if is_retweet:
-                # continue
                 retweet_of = json_obj['retweeted_status']['id']
             entities = json_obj['entities']
             hashtags_count = len(entities['hashtags'])
@@ -147,6 +146,12 @@ def read_todo_from_emtpy_file(the_dataset_file):
 def read_datasets():
     tweets_train = read_train_dataset('/Users/jwasilewski/Datasets/RecSys2014/training.dat')
     tweets_test = read_train_dataset('/Users/jwasilewski/Datasets/RecSys2014/test.dat')
+    return tweets_train, tweets_test
+
+
+def read_evaluation_datasets():
+    tweets_train = read_train_dataset('/Users/jwasilewski/Datasets/RecSys2014/training_full.dat')
+    tweets_test = read_test_dataset('/Users/jwasilewski/Datasets/RecSys2014/evaluation_empty.dat')
     return tweets_train, tweets_test
 
 

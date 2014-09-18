@@ -1,4 +1,3 @@
-import sys
 import subprocess
 import dataset
 
@@ -19,7 +18,7 @@ def read_solution(the_solution_file):
     return solutions
 
 
-def write_the_solution_file(solutions, the_solution_file):
+def write_the_solution_file(solutions, the_solution_file, evaluate=False):
     lines = list()
     lines.append('userid,tweetid,engagement' + '\n')
 
@@ -29,11 +28,11 @@ def write_the_solution_file(solutions, the_solution_file):
 
     with file(the_solution_file, 'w') as outfile:
         outfile.writelines(lines)
-
-    p = subprocess.Popen('java -jar /Users/jwasilewski/RecSys2014/rscevaluator-0.14-jar-with-dependencies.jar /Users/jwasilewski/RecSys2014/test_solution.dat %s' % the_solution_file, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    lines = p.stdout.readlines()
-    p.wait()
-    print lines[8]
+    if evaluate:
+        p = subprocess.Popen('java -jar /Users/jwasilewski/RecSys2014/rscevaluator-0.14-jar-with-dependencies.jar /Users/jwasilewski/RecSys2014/test_solution.dat %s' % the_solution_file, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        lines = p.stdout.readlines()
+        p.wait()
+        print lines[8]
 
 
 def write_the_solution_file_debug(solutions, the_solution_file):
@@ -127,4 +126,12 @@ def prepare_solutions(tweets_test, predictions):
     for i, tweet in enumerate(tweets_test):
         solutions.append((tweet['user_id'], tweet['tweet_id'], predictions[i]))
     solutions = sort_the_solution(solutions)
-    write_the_solution_file(solutions, '/Users/jwasilewski/RecSys2014/solutions.dat')
+    write_the_solution_file(solutions, '/Users/jwasilewski/RecSys2014/solutions.dat', True)
+
+
+def prepare_solutions_for_evaluation(tweets_test, predictions):
+    solutions = list()
+    for i, tweet in enumerate(tweets_test):
+        solutions.append((tweet['user_id'], tweet['tweet_id'], predictions[i]))
+    solutions = sort_the_solution(solutions)
+    write_the_solution_file(solutions, '/Users/jwasilewski/RecSys2014/evaluation_solution.dat', False)

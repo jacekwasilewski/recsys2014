@@ -34,6 +34,7 @@ def run_kmeans(whitened, k=3):
     for i in range(k):
         book.append(whitened[i])
     codebook, distortion = kmeans(whitened, array(book))
+    # codebook, distortion = kmeans(whitened, k)
     return codebook
 
 
