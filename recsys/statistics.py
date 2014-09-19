@@ -36,7 +36,6 @@ def compute_features(dataset, test_dataset):
         cluster_avg_engs[i]['eng_count'] = 0.0
         cluster_avg_engs[i]['eng_sum'] = 0.0
         cluster_avg_engs[i]['count'] = 0.0
-        cluster_avg_engs[i]['item_count'] = 0.0
 
     count = 0
     has_retweets_train = set()
@@ -62,17 +61,13 @@ def compute_features(dataset, test_dataset):
         if not item_id in items_stats:
             items_stats[item_id] = dict()
             items_stats[item_id]['count'] = 0
-            items_stats[item_id]['ratings_count'] = dict()
             items_stats[item_id]['pop'] = 0
-            for r in range(10):
-                items_stats[item_id]['ratings_count'][r + 1] = 0.0
             tweets_with_engagement_count[item_id] = 1.0
             tweets_with_engagement_sum[item_id] = 1.0
 
         items_stats[item_id]['pop'] += 1
         if num_engagements > 0:
             items_stats[item_id]['count'] += 1.0
-            items_stats[item_id]['ratings_count'][rating] += 1.0
 
     for tweet in dataset:
         item_id = tweet['imdb_item_id']
@@ -109,14 +104,6 @@ def compute_features(dataset, test_dataset):
                 else:
                     tweets_with_engagement_sum[item_id] = 1.0
 
-    for item_id in clusters:
-        cluster_avg_engs[clusters[item_id]]['item_count'] += 1.0
-
-    clusters_coeff = list()
-    for i in range(k):
-        clusters_coeff.append(float(log(cluster_avg_engs[i]['eng_sum'] / cluster_avg_engs[i]['eng_count'])))
-    clusters_coeff_sorted = np.argsort(clusters_coeff)
-
     train_features = list()
     train_labels = list()
     for tweet in dataset:
@@ -127,8 +114,9 @@ def compute_features(dataset, test_dataset):
 
         if item_id in clusters:
             cluster = clusters[item_id]
+            cae = cluster_avg_engs[cluster]['eng_sum'] / cluster_avg_engs[cluster]['eng_count']
         else:
-            cluster = 0
+            cae = 0
 
         num_engagements = int(tweet['tweet_favourite_count']) + int(tweet['tweet_retweet_count'])
 
@@ -136,13 +124,13 @@ def compute_features(dataset, test_dataset):
         if num_engagements == 0:
             num_engagements = 2
 
-        if item_id in items_stats and items_stats[item_id]['count'] > 0:
-            lis = log(items_stats[item_id]['count'])
+        if item_id in items_stats and items_stats[item_id]['pop'] > 0:
+            lisp = log(items_stats[item_id]['pop'])
         else:
-            lis = 0
+            lisp = 0
 
         if item_id in tweets_with_engagement_sum:
-            twe = log(tweets_with_engagement_sum[item_id])
+            twe = log(tweets_with_engagement_sum[item_id]) - log(tweets_with_engagement_count[item_id])
         else:
             twe = 0
 
@@ -150,9 +138,10 @@ def compute_features(dataset, test_dataset):
             rating * int(rating < 2),
             rating * int(rating > 6),
             rating * int(rating >= 2 and rating <= 6),
-            twe - lis,
+            twe,
+            lisp,
             int(tweet['tweet_is_retweet']),
-            clusters_coeff_sorted[cluster] + 1,
+            cae,
             int(int(tweet['user_mentions_count']) > 0),
             int(tweet['tweet_id'] in has_retweets_train)
         ))
@@ -165,17 +154,17 @@ def compute_features(dataset, test_dataset):
 
         if item_id in clusters:
             cluster = clusters[item_id]
-            cluster_id = clusters_coeff_sorted[cluster] + 1
+            cae = cluster_avg_engs[cluster]['eng_sum'] / cluster_avg_engs[cluster]['eng_count']
         else:
-            cluster_id = 0
+            cae = 0
 
-        if item_id in items_stats and items_stats[item_id]['count'] > 0:
-            lis = log(items_stats[item_id]['count'])
+        if item_id in items_stats and items_stats[item_id]['pop'] > 0:
+            lisp = log(items_stats[item_id]['pop'])
         else:
-            lis = 0
+            lisp = 0
 
         if item_id in tweets_with_engagement_sum:
-            twe = log(tweets_with_engagement_sum[item_id])
+            twe = log(tweets_with_engagement_sum[item_id]) - log(tweets_with_engagement_count[item_id])
         else:
             twe = 0
 
@@ -183,9 +172,10 @@ def compute_features(dataset, test_dataset):
             rating * int(rating < 2),
             rating * int(rating > 6),
             rating * int(rating >= 2 and rating <= 6),
-            twe - lis,
+            twe,
+            lisp,
             int(tweet['tweet_is_retweet']),
-            cluster_id,
+            cae,
             int(int(tweet['user_mentions_count']) > 0),
             int(tweet['tweet_id'] in has_retweets_test)
         ))

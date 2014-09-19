@@ -5,9 +5,8 @@ import solution
 import statistics
 
 
-if __name__ == "__main__":
-    print('Loading datasets...')
-    tweets_train, tweets_test = dataset.read_datasets()
+def run(tweets_train, tweets_test):
+    reload(statistics)
 
     print('Computing features...')
     train_features, train_labels, test_features = statistics.compute_features(tweets_train, tweets_test)
@@ -24,6 +23,12 @@ if __name__ == "__main__":
 
 
 if __name__ == "__main__2":
+    print('Loading datasets...')
+    tweets_train, tweets_test = dataset.read_datasets()
+    run(tweets_train, tweets_test)
+
+
+if __name__ == "__main__":
     print('Loading datasets...')
     tweets_train, tweets_test = dataset.read_evaluation_datasets()
 
