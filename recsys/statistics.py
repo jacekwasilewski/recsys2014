@@ -21,15 +21,7 @@ def compute_features(dataset, test_dataset):
     cluster_avg_engs = dict()
     tweets_with_engagement_count = dict()
     tweets_with_engagement_sum = dict()
-    users_stats = dict()
     items_stats = dict()
-
-    for tweet in dataset:
-        user_id = tweet['user_id']
-        if not user_id in users_stats:
-            users_stats[user_id] = dict()
-            users_stats[user_id]['count'] = 0.0
-            users_stats[user_id]['eng_count'] = 0.0
 
     for i in range(k):
         cluster_avg_engs[i] = dict()
@@ -71,7 +63,6 @@ def compute_features(dataset, test_dataset):
 
     for tweet in dataset:
         item_id = tweet['imdb_item_id']
-        user_id = tweet['user_id']
         rating = tweet['imdb_rating']
 
         if rating < 1 or rating > 10:
@@ -82,9 +73,7 @@ def compute_features(dataset, test_dataset):
         cluster = clusters[item_id]
 
         cluster_avg_engs[cluster]['count'] += 1.0
-        users_stats[user_id]['count'] += 1.0
         if num_engagements > 0:
-            users_stats[user_id]['eng_count'] += 1.0
             if not tweet['tweet_is_retweet']:
                 cluster_avg_engs[cluster]['eng_count'] += 1.0
                 cluster_avg_engs[cluster]['eng_sum'] += int(tweet['tweet_favourite_count']) + int(
@@ -114,7 +103,7 @@ def compute_features(dataset, test_dataset):
 
         if item_id in clusters:
             cluster = clusters[item_id]
-            cae = cluster_avg_engs[cluster]['eng_sum'] / cluster_avg_engs[cluster]['eng_count']
+            cae = log(cluster_avg_engs[cluster]['eng_sum'] / cluster_avg_engs[cluster]['eng_count'])
         else:
             cae = 0
 
@@ -130,7 +119,7 @@ def compute_features(dataset, test_dataset):
             lisp = 0
 
         if item_id in tweets_with_engagement_sum:
-            twe = log(tweets_with_engagement_sum[item_id]) - log(tweets_with_engagement_count[item_id])
+            twe = log(tweets_with_engagement_sum[item_id] / tweets_with_engagement_count[item_id])
         else:
             twe = 0
 
@@ -154,7 +143,7 @@ def compute_features(dataset, test_dataset):
 
         if item_id in clusters:
             cluster = clusters[item_id]
-            cae = cluster_avg_engs[cluster]['eng_sum'] / cluster_avg_engs[cluster]['eng_count']
+            cae = log(cluster_avg_engs[cluster]['eng_sum'] / cluster_avg_engs[cluster]['eng_count'])
         else:
             cae = 0
 
@@ -164,7 +153,7 @@ def compute_features(dataset, test_dataset):
             lisp = 0
 
         if item_id in tweets_with_engagement_sum:
-            twe = log(tweets_with_engagement_sum[item_id]) - log(tweets_with_engagement_count[item_id])
+            twe = log(tweets_with_engagement_sum[item_id] / tweets_with_engagement_count[item_id])
         else:
             twe = 0
 
