@@ -39,6 +39,16 @@ def compute_features(dataset, test_dataset):
         cluster_avg_engs[i]['item_count'] = 0.0
 
     count = 0
+    has_retweets_train = set()
+    has_retweets_test = set()
+    for tweet in dataset:
+        if tweet['tweet_is_retweet']:
+            has_retweets_train.add(tweet['tweet_retweet_of'])
+            has_retweets_test.add(tweet['tweet_retweet_of'])
+    for tweet in test_dataset:
+        if tweet['tweet_is_retweet']:
+            has_retweets_test.add(tweet['tweet_retweet_of'])
+
     for tweet in dataset:
         count += 1
         item_id = tweet['imdb_item_id']
@@ -130,13 +140,22 @@ def compute_features(dataset, test_dataset):
             lis = log(items_stats[item_id]['count'])
         else:
             lis = 0
-        train_features.append((rating * int(rating < 2),
-                               rating * int(rating > 6),
-                               rating * int(rating >= 2 and rating <= 6),
-                               log(tweets_with_engagement_sum[item_id]) - lis,
-                               int(tweet['tweet_is_retweet']),
-                               clusters_coeff_sorted[cluster] + 1,
-                               int(tweet['user_mentions_count'])))
+
+        if item_id in tweets_with_engagement_sum:
+            twe = log(tweets_with_engagement_sum[item_id])
+        else:
+            twe = 0
+
+        train_features.append((
+            rating * int(rating < 2),
+            rating * int(rating > 6),
+            rating * int(rating >= 2 and rating <= 6),
+            twe - lis,
+            int(tweet['tweet_is_retweet']),
+            clusters_coeff_sorted[cluster] + 1,
+            int(int(tweet['user_mentions_count']) > 0),
+            int(tweet['tweet_id'] in has_retweets_train)
+        ))
         train_labels.append(num_engagements)
 
     test_features = list()
@@ -146,28 +165,28 @@ def compute_features(dataset, test_dataset):
 
         if item_id in clusters:
             cluster = clusters[item_id]
+            cluster_id = clusters_coeff_sorted[cluster] + 1
         else:
-            cluster = 0
+            cluster_id = 0
 
         if item_id in items_stats and items_stats[item_id]['count'] > 0:
             lis = log(items_stats[item_id]['count'])
         else:
             lis = 0
 
-        if item_id in items_stats:
-            test_features.append((rating * int(rating < 2),
-                                  rating * int(rating > 6),
-                                  rating * int(rating >= 2 and rating <= 6),
-                                  log(tweets_with_engagement_sum[item_id]) - lis,
-                                  int(tweet['tweet_is_retweet']),
-                                  clusters_coeff_sorted[cluster] + 1,
-                                  int(tweet['user_mentions_count'])))
+        if item_id in tweets_with_engagement_sum:
+            twe = log(tweets_with_engagement_sum[item_id])
         else:
-            test_features.append((rating * int(rating < 2),
-                                  rating * int(rating > 6),
-                                  rating * int(rating >= 2 and rating <= 6),
-                                  0,
-                                  int(tweet['tweet_is_retweet']),
-                                  0,
-                                  int(tweet['user_mentions_count'])))
+            twe = 0
+
+        test_features.append((
+            rating * int(rating < 2),
+            rating * int(rating > 6),
+            rating * int(rating >= 2 and rating <= 6),
+            twe - lis,
+            int(tweet['tweet_is_retweet']),
+            cluster_id,
+            int(int(tweet['user_mentions_count']) > 0),
+            int(tweet['tweet_id'] in has_retweets_test)
+        ))
     return train_features, train_labels, test_features
