@@ -6,13 +6,12 @@ import numpy as np
 import item_clustering
 
 
-def compute_features(dataset, test_dataset):
+def compute_statistics(dataset, test_dataset, k=3):
     print('Computing FFTs...')
     ffts, ffts_labels = item_clustering.compute_fft_full(dataset)
 
     # running k-means
     print('Clustering items...')
-    k = 3
     whitened = whiten(ffts)
     codebook = item_clustering.run_kmeans(whitened, k)
     clusters = item_clustering.assign_clusters(whitened, ffts_labels, codebook)
@@ -92,6 +91,24 @@ def compute_features(dataset, test_dataset):
                         tweet['tweet_retweet_count'])
                 else:
                     tweets_with_engagement_sum[item_id] = 1.0
+    return {
+        'clusters': clusters,
+        'cluster_avg_engs': cluster_avg_engs,
+        'items_stats': items_stats,
+        'tweets_with_engagement_sum': tweets_with_engagement_sum,
+        'tweets_with_engagement_count': tweets_with_engagement_count,
+        'has_retweets_train': has_retweets_train,
+        'has_retweets_test': has_retweets_test
+    }
+
+
+def prepare_train_features(dataset, statistics, retweets=True):
+    clusters = statistics['clusters']
+    cluster_avg_engs = statistics['cluster_avg_engs']
+    items_stats = statistics['items_stats']
+    tweets_with_engagement_sum = statistics['tweets_with_engagement_sum']
+    tweets_with_engagement_count = statistics['tweets_with_engagement_count']
+    has_retweets_train = statistics['has_retweets_train']
 
     train_features = list()
     train_labels = list()
@@ -132,12 +149,22 @@ def compute_features(dataset, test_dataset):
             int(tweet['tweet_is_retweet']),
             cae,
             int(int(tweet['user_mentions_count']) > 0),
-            int(tweet['tweet_id'] in has_retweets_train)
+            int(tweet['tweet_id'] in has_retweets_train and retweets)
         ))
         train_labels.append(num_engagements)
+    return train_features, train_labels
+
+
+def prepare_test_features(dataset, statistics, retweets=True):
+    clusters = statistics['clusters']
+    cluster_avg_engs = statistics['cluster_avg_engs']
+    items_stats = statistics['items_stats']
+    tweets_with_engagement_sum = statistics['tweets_with_engagement_sum']
+    tweets_with_engagement_count = statistics['tweets_with_engagement_count']
+    has_retweets_test = statistics['has_retweets_test']
 
     test_features = list()
-    for tweet in test_dataset:
+    for tweet in dataset:
         item_id = tweet['imdb_item_id']
         rating = float(tweet['imdb_rating'])
 
@@ -166,6 +193,6 @@ def compute_features(dataset, test_dataset):
             int(tweet['tweet_is_retweet']),
             cae,
             int(int(tweet['user_mentions_count']) > 0),
-            int(tweet['tweet_id'] in has_retweets_test)
+            int(tweet['tweet_id'] in has_retweets_test and retweets)
         ))
-    return train_features, train_labels, test_features
+    return test_features
