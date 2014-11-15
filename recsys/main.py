@@ -14,13 +14,13 @@ def run(tweets_train, tweets_test, evaluation=False, retweets=True, k=3):
     test_features = statistics.prepare_test_features(tweets_test, stats, retweets)
 
     if evaluation:
-        np.savetxt('/Users/jwasilewski/RecSys2014/eval_train_features.csv', train_features, delimiter=",")
-        np.savetxt('/Users/jwasilewski/RecSys2014/eval_train_labels.csv', train_labels, delimiter=",")
-        np.savetxt('/Users/jwasilewski/RecSys2014/eval_test_features.csv', test_features, delimiter=",")
+        np.savetxt('eval_train_features.csv', train_features, delimiter=",")
+        np.savetxt('eval_train_labels.csv', train_labels, delimiter=",")
+        np.savetxt('eval_test_features.csv', test_features, delimiter=",")
     else:
-        np.savetxt('/Users/jwasilewski/RecSys2014/train_features.csv', train_features, delimiter=",")
-        np.savetxt('/Users/jwasilewski/RecSys2014/train_labels.csv', train_labels, delimiter=",")
-        np.savetxt('/Users/jwasilewski/RecSys2014/test_features.csv', test_features, delimiter=",")
+        np.savetxt('train_features.csv', train_features, delimiter=",")
+        np.savetxt('train_labels.csv', train_labels, delimiter=",")
+        np.savetxt('test_features.csv', test_features, delimiter=",")
 
     print('Learning model...')
     lr_model = model.learn_model(train_features, train_labels)

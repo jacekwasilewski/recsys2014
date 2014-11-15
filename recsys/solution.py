@@ -29,7 +29,7 @@ def write_the_solution_file(solutions, the_solution_file, evaluate=False):
     with file(the_solution_file, 'w') as outfile:
         outfile.writelines(lines)
     if evaluate:
-        p = subprocess.Popen('java -jar /Users/jwasilewski/RecSys2014/rscevaluator-0.14-jar-with-dependencies.jar /Users/jwasilewski/RecSys2014/test_solution.dat %s' % the_solution_file, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        p = subprocess.Popen('java -jar rscevaluator-0.14-jar-with-dependencies.jar test_solution.dat %s' % the_solution_file, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         lines = p.stdout.readlines()
         p.wait()
         print lines[8]
@@ -115,7 +115,7 @@ def write_the_solution_file_clustered(solutions, the_solution_file, cluster):
     with file(the_solution_file, 'w') as outfile:
         outfile.writelines(lines)
 
-    p = subprocess.Popen('java -jar /Users/jwasilewski/RecSys2014/rscevaluator-0.14-jar-with-dependencies.jar /Users/jwasilewski/RecSys2014/test_solution_%s.dat %s' % (str(cluster), the_solution_file), shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    p = subprocess.Popen('java -jar rscevaluator-0.14-jar-with-dependencies.jar test_solution_%s.dat %s' % (str(cluster), the_solution_file), shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     lines = p.stdout.readlines()
     p.wait()
     print lines[8]
@@ -126,7 +126,7 @@ def prepare_solutions(tweets_test, predictions):
     for i, tweet in enumerate(tweets_test):
         solutions.append((tweet['user_id'], tweet['tweet_id'], predictions[i]))
     solutions = sort_the_solution(solutions)
-    write_the_solution_file(solutions, '/Users/jwasilewski/RecSys2014/solutions.dat', True)
+    write_the_solution_file(solutions, 'solutions.dat', True)
 
 
 def prepare_solutions_for_evaluation(tweets_test, predictions):
@@ -134,4 +134,4 @@ def prepare_solutions_for_evaluation(tweets_test, predictions):
     for i, tweet in enumerate(tweets_test):
         solutions.append((tweet['user_id'], tweet['tweet_id'], predictions[i]))
     solutions = sort_the_solution(solutions)
-    write_the_solution_file(solutions, '/Users/jwasilewski/RecSys2014/evaluation_solution.dat', False)
+    write_the_solution_file(solutions, 'evaluation_solution.dat', False)
